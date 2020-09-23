@@ -1,0 +1,117 @@
+.image-cropper-wrapper {
+	width: 100vw;
+	height: 100vh;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 1000;
+  background-color: #000;
+  
+  .cancel {
+    position: absolute;
+    left: 20px;
+    bottom: 40px;
+    background: transparent;
+    color: #fff;
+  }
+
+  .submit {
+    position: absolute;
+    right: 20px;
+    bottom: 40px;
+    border-radius: 8px;
+  }
+	.bg_container {
+		height: 100%;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		pointer-events: none;
+		.bg_top {
+			flex: 1;
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+		.bg_middle {
+			display: flex;
+			.bg_middle_left,
+			.bg_middle_right {
+				flex: 1;
+				background-color: rgba(0, 0, 0, 0.5);
+			}
+			.cut_wrapper {
+				position: relative;
+				.border {
+					background-color: rgba(255, 255, 255, 0.4);
+					position: absolute;
+				}
+				.border-top-left {
+					height: 4px;
+					top: -4px;
+					left: -4px;
+					width: 30rpx;
+				}
+				.border-left-top {
+					height: 30rpx;
+					top: -4px;
+					left: -4px;
+					width: 4px;
+				}
+				.border-top-right {
+					top: -4px;
+					right: -4px;
+					width: 30rpx;
+					height: 4px;
+				}
+				.border-right-top {
+					top: -4px;
+					right: -4px;
+					height: 30rpx;
+					width: 4px;
+				}
+				.border-right-bottom {
+					bottom: -4px;
+					right: -4px;
+					height: 30rpx;
+					width: 4px;
+				}
+				.border-bottom-right {
+					width: 30rpx;
+					height: 4px;
+					bottom: -4px;
+					right: -4px;
+				}
+				.border-left-bottom {
+					height: 30rpx;
+					width: 4px;
+					bottom: -4px;
+					left: -4px;
+				}
+				.border-bottom-left {
+					width: 30rpx;
+					height: 4px;
+					bottom: -4px;
+					left: -4px;
+				}
+			}
+		}
+		.bg_bottom {
+			flex: 1;
+			background-color: rgba(0, 0, 0, 0.5);
+		}
+	}
+	.img {
+		position: absolute;
+		z-index: -1;
+		backface-visibility: hidden;
+    transform-origin: center center;
+    .Image {
+      width: 100%;
+      height: 100%;
+    }
+	}
+	.my-canvas-class {
+		position: absolute;
+		z-index: -2;
+	}
+}
