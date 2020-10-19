@@ -1,10 +1,10 @@
 
 import React from 'react'
 import Taro from '@tarojs/taro'
-import { View, Image, Button, Input, Picker } from '@tarojs/components';
+import {Input, Picker } from '@tarojs/components';
 import style from './index.scss'
 
-interface propsType {
+interface PropsType {
   className: string; // 最外层样式
   placeholder: string; // 没有传id或者传入id找不到对应label时候显示
   name: string; // form表单获取时的字段名
@@ -12,20 +12,20 @@ interface propsType {
   placeholderClass: string;
   mode: 'selector' | 'time' | 'date';
   
-  range?: Array<any>; // 选项列表
+  range?: Array<{ rangeKey: number; name: string }>; // 选项列表“{ rangeKey: number; name: string; }[]”
   value?: string | number; // 当前选中的id 可以不传
   rangeKey?: string; // 选项中key对应字段 可以不传 默认用key
   rangeLabel?: string; // 选项中label对应字段 可以不传 默认用label
   onchange?: Function;
 }
 
-interface stateType {
+interface StateType {
   key: string | number;
   label: string;
   index: number;
 }
 
-export default  class picker extends React.Component<propsType, stateType> {
+export default class CPicker extends React.Component<PropsType, StateType> {
   constructor(props) {
     super(props)
     this.state = {
@@ -35,7 +35,7 @@ export default  class picker extends React.Component<propsType, stateType> {
     };
   }
 
-  UNSAFE_componentWillMount () { 
+  UNSAFE_componentWillMount () {
     if (this.props.value === undefined) return
 
     if (this.props.mode !== 'selector') {
@@ -45,7 +45,6 @@ export default  class picker extends React.Component<propsType, stateType> {
       })
       return
     }
-
     const option = this.props.range!.find((item, index) => {
       if (item[this.props.rangeKey|| 'key'] === this.props.value) {
         this.setState({
@@ -56,7 +55,13 @@ export default  class picker extends React.Component<propsType, stateType> {
       return false
     })
     
-    if (!option) return
+    if (!option) {
+      this.setState({
+        key: '',
+        label: '',
+      })
+      return
+    }
     this.setState({
       key: this.props.value,
       label:option[this.props.rangeLabel|| 'label'],
@@ -64,7 +69,7 @@ export default  class picker extends React.Component<propsType, stateType> {
 
   }
 
-  componentWillReceiveProps (nextProps) { 
+  componentWillReceiveProps (nextProps) {
     if (nextProps.value === undefined) return
 
     if (nextProps.mode !== 'selector') {
@@ -76,7 +81,7 @@ export default  class picker extends React.Component<propsType, stateType> {
     }
 
     const option = nextProps.range!.find((item, index) => {
-      if (item[nextProps.rangeKey|| 'key'] == nextProps.value) {
+      if (item[nextProps.rangeKey|| 'key'].toString() === nextProps.value.toString()) {
         this.setState({
           index: index,
         })
@@ -106,6 +111,9 @@ export default  class picker extends React.Component<propsType, stateType> {
         label: e.detail.value,
       })
       this.props.onchange && this.props.onchange(this.state.key)
+      return
+    }
+    if (!this.props.range?.length) {
       return
     }
     const label = this.props.range![e.detail.value][this.props.rangeLabel|| 'label']

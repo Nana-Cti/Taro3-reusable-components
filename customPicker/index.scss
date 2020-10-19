@@ -1,0 +1,82 @@
+@import '@/styles/base.scss';
+.sectionValue {
+  text-align: right;
+  flex: 1 1;
+  height: 100%;
+}
+
+
+
+.Mask {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.595);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  &.hidden {
+    display: none;
+  }
+
+  .PickerViewShell {
+    background-color: #fff;
+    width: 100%;
+    padding: 0 30px;
+    position: fixed;
+    bottom: 0;
+    z-index: 20000;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    height: 46%;
+
+    .button {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 10px;
+      button {
+        margin: 0 20px;
+        border: none;
+        font-size: 34px;
+        height: 90px;
+        line-height: 90px;
+        width: 260px;
+        border-radius: 12px;
+        &:nth-child(2) {
+          background-color: #07c160;
+          color: #fff;
+        }
+        &:nth-child(1) {
+          background-color: #f2f2f2;
+          color: #07c160;
+        }
+      }
+    }
+    // 选择器
+    .PickerView {
+      height: calc(100% - 160px);
+      width: 100%;
+    }
+
+    // 设置选择器中间选中框
+    .indicatorClass {
+      border-top: 0.5px solid #f6f6f6;
+      border-bottom: 0.5px solid #f6f6f6;
+      height: 110px;
+      width: 100%;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  }
+
+  
+}

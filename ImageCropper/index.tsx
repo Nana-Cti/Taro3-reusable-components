@@ -72,21 +72,21 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
       _imgRatio: 1, //图片的 宽/高 比
       _imgLeft: 0, //图片相对可使用窗口的左边距
       _imgTop: 0, //图片相对可使用窗口的上边距
-      _windowHeight: 0, //可使用窗口的高度
+      _windowHeight: 0, //可使用窗口的高
       _windowWidth: 0, //可使用窗口宽度
       _canvasWidth: 0, //canvas的宽度
       _canvasHeight: 0, //canvas的高度
       _canvasLeft: 0, //canvas相对可使用窗口的左边距
       _canvasTop: 0, //canvas相对可使用窗口的上边距
-      _cutWidth: 230, //裁剪框的宽度
-      _cutHeight: 230, //裁剪框的高度
+      _cutWidth: 200, //裁剪框的宽度
+      _cutHeight: 200, //裁剪框的高度
       _cutLeft: 0, //裁剪框相对可使用窗口的左边距
       _cutTop: 0, //裁剪框相对可使用窗口的上边距
       scale: Number(props.scale) || 1, //默认图片的放大倍数
       angle: Number(props.angle) || 0, //图片旋转角度
-      quality: 1, //图片的质量
-      maxScale: 3,
-      minScale: 0.5,
+      quality: 0.3, //图片的质量
+      maxScale: 4,
+      minScale: 1,// 设置为1, 则不能比框小
     };
     // const { platform } = Taro.getSystemInfoSync();
     // // 安卓节流
@@ -132,10 +132,13 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
    */
   async getDeviceInfo() {
     const { windowHeight, windowWidth } = await Taro.getSystemInfoSync();
+    const { system, statusBarHeight } = Taro.getSystemInfoSync()
+    const isIOS = system.indexOf('iOS') > -1
+    const navHeight = isIOS ? 0 : (48 + statusBarHeight)
     return new Promise((resolve) => {
       this.setState(
         {
-          _windowHeight: windowHeight,
+          _windowHeight: windowHeight + navHeight,
           _windowWidth: windowWidth,
         },
         resolve
@@ -211,17 +214,17 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
   }
   /**
    * 计算图片的宽高信息
-   * 让图片的长边铺满裁剪框
+   * 让图片的短边铺满裁剪框
    */
   computedImageSize() {
     const { _imgRatio, _cutHeight, _cutWidth } = this.state;
     let _imgWidth, _imgHeight;
-    //宽比较长
-    if (_imgRatio >= 1) {
+    // 高比较长
+    if (_imgRatio <= 1) {
       _imgWidth = _cutWidth;
       _imgHeight = _imgWidth / _imgRatio;
     } else {
-      // 高比较长
+      // 宽比较长
       _imgHeight = _cutHeight;
       _imgWidth = _imgHeight * _imgRatio;
     }
@@ -263,7 +266,6 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
    *  图片的点击，移动，移动结束事件
    */
   _imgTouchStart(e) {
-    console.log(e)
     this._touchEndFlag = false; //开始触摸
     if (e.touches.length === 1) {
       // 是否单指触摸
@@ -285,32 +287,38 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
         Math.pow(width, 2) + Math.pow(height, 2)
       );
 
-      //双指旋转
+      // const imgWidth = this.state.angle % 180 ? this.state._imgHeight : this.state._imgWidth
+      // const imgHeight = this.state.angle % 180 ? this.state._imgWidth : this.state._imgHeight
+      const imgWidth = this.state._imgWidth
+      const imgHeight = this.state._imgHeight
+
+      // 双指旋转
       this._imgTouchRelative = [
         {
           x:
             e.touches[0].clientX -
             this.state._imgLeft -
-            this.state._imgWidth / 2,
+            imgWidth / 2,
           y:
             e.touches[0].clientY -
-            this.state._imgTop -
-            this.state._imgHeight / 2,
+            this.state._imgTop - 
+            imgHeight / 2,
         },
         {
           x:
             e.touches[1].clientX -
             this.state._imgLeft -
-            this.state._imgWidth / 2,
+            imgWidth / 2,
           y:
             e.touches[1].clientY -
             this.state._imgTop -
-            this.state._imgHeight / 2,
+            imgHeight / 2,
         },
       ];
     }
     console.log('开始', this._imgTouchRelative);
   }
+  _touchPointerOne
 
   _imgTouchMove(e) {
     //如果结束触摸，则不再移动
@@ -319,14 +327,41 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
       return;
     }
 
+    // const imgWidth = this.state.angle % 180 ? this.state._imgHeight : this.state._imgWidth
+    // const imgHeight = this.state.angle % 180 ? this.state._imgWidth : this.state._imgHeight
+    const imgWidth = this.state._imgWidth
+    const imgHeight = this.state._imgHeight
+
     if (e.touches.length === 1 && this._touchPointerOne) {
       // 单指拖动
-      const left = e.touches[0].clientX - this._imgTouchRelative[0].x;
-      const top = e.touches[0].clientY - this._imgTouchRelative[0].y;
+      let left = e.touches[0].clientX - this._imgTouchRelative[0].x;
+      let top = e.touches[0].clientY - this._imgTouchRelative[0].y;
+      const right = left + imgWidth * this.state.scale
+      const bottom = top + imgHeight * this.state.scale
+
+
+      const isLeaveLeft = left >= this.state._cutLeft + (imgWidth * (this.state.scale - 1) / 2)
+      const isLeaveTop = top >= this.state._cutTop + (imgHeight * (this.state.scale - 1) / 2)
+      const isLeaveRight = this.state._cutLeft + this.state._cutWidth + (imgWidth * (this.state.scale - 1) / 2) >= right
+      const isLeaveBottom = this.state._cutTop + this.state._cutHeight + (imgHeight * (this.state.scale - 1) / 2) >= bottom
+
+      isLeaveLeft && (left = this.state._cutLeft + (imgWidth * (this.state.scale - 1) / 2))
+      isLeaveTop && (top = this.state._cutTop + (imgHeight * (this.state.scale - 1) / 2))
+      isLeaveRight && (left = this.state._cutLeft + this.state._cutWidth - imgWidth * this.state.scale + (imgWidth * (this.state.scale - 1) / 2))
+      isLeaveBottom && (top = this.state._cutTop + this.state._cutHeight - imgHeight * this.state.scale + (imgHeight * (this.state.scale - 1) / 2))
+      
+      // console.log(
+      //   isLeaveLeft,
+      //   isLeaveTop,
+      //   isLeaveRight,
+      //   isLeaveBottom,
+      // )
+      // console.log('图片top',top , '裁切框top',this.state._cutTop)
+
       setTimeout(() => {
         this.setState({
           _imgLeft: left,
-          _imgTop: top,
+          _imgTop: top
         });
       }, 0);
     } else if (e.touches.length >= 2 && !this._touchPointerOne) {
@@ -342,91 +377,37 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
         this.state.scale *
         (newHypotenuseLength / this._hypotenuseLength);
       //如果缩放倍数超过maxScale或是minScale，则不变化，
-      newScale =
-        newScale > this.state.maxScale ||
-          newScale < this.state.minScale
-          ? this.state.scale
-          : newScale;
+
+      newScale = this.state.scale > newScale ? 
+        newScale < this.state.minScale + 0.1 ? this.state.minScale : newScale
+        :
+        newScale > this.state.maxScale - 0.1 ? this.state.maxScale : newScale
+
+
       this._hypotenuseLength = newHypotenuseLength;
 
-      // 双指旋转
-      const _newImgTouchRelative = [
-        {
-          x:
-            e.touches[0].clientX -
-            this.state._imgLeft -
-            this.state._imgWidth / 2,
-          y:
-            e.touches[0].clientY -
-            this.state._imgTop -
-            this.state._imgHeight / 2,
-        },
-        {
-          x:
-            e.touches[1].clientX -
-            this.state._imgLeft -
-            this.state._imgWidth / 2,
-          y:
-            e.touches[1].clientY -
-            this.state._imgTop -
-            this.state._imgHeight / 2,
-        },
-      ];
-      // console.log(e.touches[1], 'e.touches[1');
-      // 第一根手指的旋转角度
-      const firstAtanOld =
-        (180 / Math.PI) *
-        Math.atan2(
-          this._imgTouchRelative[0].y,
-          this._imgTouchRelative[0].x
-        );
-      const firstAtan =
-        (180 / Math.PI) *
-        Math.atan2(
-          _newImgTouchRelative[0].y,
-          _newImgTouchRelative[0].x
-        );
 
-      const firstDeg = firstAtan - firstAtanOld;
-      // 第二根手指的旋转角度
-      const secondAtanOld =
-        (180 / Math.PI) *
-        Math.atan2(
-          this._imgTouchRelative[1].y,
-          this._imgTouchRelative[1].x
-        );
+      
+      
 
-      const secondAtan =
-        (180 / Math.PI) *
-        Math.atan2(
-          _newImgTouchRelative[1].y,
-          _newImgTouchRelative[1].x
-        );
-      const secondDeg = secondAtan - secondAtanOld;
-      // 当前的旋转角度
-      let currentDeg = 0;
-      // if (Math.abs(firstDeg) > Math.abs(secondDeg)) {
-      // 	currentDeg = firstDeg;
-      // } else {
-      // 	currentDeg = secondDeg;
-      // }
-      if (firstDeg != 0 && firstDeg != 360) {
-        currentDeg = firstDeg;
-      } else if (secondDeg != 0 && secondDeg != 360) {
-        currentDeg = secondDeg;
-      }
-      // console.log(this._imgTouchRelative[1], 'img_touch_relative');
-      this._imgTouchRelative = _newImgTouchRelative;
+      // 后面注释的部分是旋转
+      const targetLeft = this.state._cutLeft + (imgWidth * (newScale - 1) / 2)
+      const targetTop = this.state._cutTop + (imgHeight * (newScale - 1) / 2)
+
       setTimeout(() => {
-        this.setState(
-          (prevState) => ({
-            scale: newScale,
-            angle: prevState.angle + currentDeg,
-          }),
-          () => {
-            // console.log(this.state.angle, 'angle');
-          }
-        );
+        this.setState({
+          _imgLeft: 
+            this.state.scale > newScale ? 
+              targetLeft > this.state._imgLeft ? this.state._imgLeft + 5 : targetLeft
+              : 
+              this.state._imgLeft,
+          _imgTop: 
+            this.state.scale > newScale ? 
+              targetTop > this.state._imgTop ? this.state._imgTop + 5 : targetTop
+              : 
+              this.state._imgTop,
+          scale: newScale,
+        })
       }, 0);
     }
   }
@@ -583,8 +564,17 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
     }
   }
 
+  rotate = () => {
+    this.setState({
+      angle: (this.state.angle + 90)%360,
+
+    })
+  }
+
   render() {
     const {
+      _cutTop,
+      _cutLeft,
       _cutWidth,
       _cutHeight,
       imgSrc,
@@ -606,6 +596,11 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
           size='mini'
           onClick={() => this.props.onCancel()}
         >取消</Button>
+        {/* <Image
+          src={require('@/images/home/rotate.png').default}
+          className={style.rotate}
+          onClick={this.rotate}
+        /> */}
         <Button
           type='primary'
           className={style.submit}
@@ -613,7 +608,7 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
           onClick={() => this.handleOk()}
         >确定</Button>
         <View className={style['bg_container']}>
-          <View className={style['bg_top']}></View>
+          <View className={style['bg_top']} ></View>
           <View className={style['bg_middle']}>
             <View className={style['bg_middle_left']}></View>
             <View
@@ -645,6 +640,7 @@ export default class ImageCropper extends React.Component<PropType, StateType> {
             left: _imgLeft - (_imgWidth * (scale - 1)) / 2 + 'px',
             // translate3d(${_imgLeft}px,${_imgTop}px,0)
             transform: `rotate(${angle}deg) `,
+            transformOrigin: `${(_cutLeft + _cutWidth / 2) - (_imgLeft - (_imgWidth * (scale - 1)) / 2)}px ${(_cutTop + _cutHeight / 2) - (_imgTop - (_imgHeight * (scale - 1)) / 2) }px`,
           }}
           onTouchStart={(e) => this._imgTouchStart(e)}
           onTouchMove={(e) => this._imgTouchMove(e)}
