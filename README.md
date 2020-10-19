@@ -1,4 +1,4 @@
-# TaroV3.0-Reusable-Components
+# Taro3-reusable-components
 一些可以重复使用的组件
 
 loading --> 触底加载的动画
